@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣可轉債(CB)監控站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-10 px-4">
+        <header class="mb-8 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800 border-l-4 border-blue-600 pl-3">📈 可轉債(CB) 發行預報</h1>
+            <div id="loading" class="text-blue-600 font-semibold">資料讀取中...</div>
+        </header>
+
+        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white">
+                            <th class="p-4">公司</th>
+                            <th class="p-4">申報日期</th>
+                            <th class="p-4 text-center">狀態進度</th>
+                            <th class="p-4">預計金額</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cb-list" class="divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        <p class="mt-4 text-sm text-gray-500 text-right">※ 資料每日凌晨自動從公開資訊觀測站更新</p>
+    </div>
+
+    <script>
+        const API_URL = 'YOUR_GAS_URL_HERE';
+
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const container = document.getElementById('cb-list');
+                document.getElementById('loading').classList.add('hidden');
+
+                container.innerHTML = data.map(item => `
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="p-4">
+                            <div class="font-bold text-gray-800">${item.code}</div>
+                            <div class="text-sm text-gray-500">${item.name}</div>
+                        </td>
+                        <td class="p-4 text-gray-600">${item.date}</td>
+                        <td class="p-4">
+                            <span class="block text-center px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">
+                                ${item.status}
+                            </span>
+                        </td>
+                        <td class="p-4 font-medium text-emerald-600">${item.amount}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('loading').innerText = "讀取失敗，請確認 API 權限";
+            }
+        }
+        loadData();
+    </script>
+</body>
+</html>
