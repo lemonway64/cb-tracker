@@ -1,4 +1,37 @@
-<script>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣可轉債(CB)監控站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-10 px-4">
+        <header class="mb-8 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800 border-l-4 border-blue-600 pl-3">📈 可轉債(CB) 發行預報</h1>
+            <div id="loading" class="text-blue-600 font-semibold text-sm">正在從 Google 讀取資料...</div>
+        </header>
+
+        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800 text-white">
+                        <th class="p-4 text-sm font-semibold">公司</th>
+                        <th class="p-4 text-sm font-semibold">申報/發現日</th>
+                        <th class="p-4 text-sm font-semibold text-center">狀態進度</th>
+                        <th class="p-4 text-sm font-semibold">預計金額</th>
+                    </tr>
+                </thead>
+                <tbody id="cb-list" class="divide-y divide-gray-200">
+                    </tbody>
+            </table>
+        </div>
+        <p class="mt-4 text-xs text-gray-500 text-right font-medium">※ 資料每日凌晨自動從公開資訊觀測站更新</p>
+    </div>
+
+    <script>
+        // 請務必將下方的 URL 換成你 GAS 部署後的「網頁應用程式 URL」
         const API_URL = 'https://script.google.com/macros/s/AKfycbx-tM3B7_NrVXmuZj5AQZ_F2bqEpicgFU0LS9eoGIbiARhQxEzFrxtnHr-cbLz3MTtwgw/exec';
 
         async function loadData() {
@@ -6,32 +39,38 @@
                 const response = await fetch(API_URL);
                 const data = await response.json();
                 const container = document.getElementById('cb-list');
-                document.getElementById('loading').classList.add('hidden');
+                const loadingText = document.getElementById('loading');
 
-                // 按日期排序 (最新的在上面)
-                data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (data.length === 0) {
+                    container.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">目前試算表中尚無資料，請先在 GAS 執行一次爬蟲</td></tr>';
+                    return;
+                }
 
+                loadingText.classList.add('hidden');
                 container.innerHTML = data.map(item => `
-                    <tr class="hover:bg-blue-50 border-b border-gray-100">
+                    <tr class="hover:bg-blue-50 transition-colors">
                         <td class="p-4">
-                            <div class="font-bold text-blue-700 text-lg">${item.code}</div>
-                            <div class="text-sm text-gray-500 font-medium">${item.name}</div>
+                            <a href="https://tw.stock.yahoo.com/quote/${item.code}" target="_blank" class="font-bold text-blue-600 hover:underline">${item.code}</a>
+                            <div class="text-xs text-gray-500">${item.name}</div>
                         </td>
-                        <td class="p-4">
-                            <span class="text-gray-700">${item.date}</span>
-                            <div class="text-[10px] text-gray-400">發現日: ${item.captureDate || '記錄中'}</div>
+                        <td class="p-4 text-sm text-gray-600">
+                            <div>${item.date}</div>
+                            <div class="text-[10px] text-gray-400">發現: ${item.captureDate}</div>
                         </td>
-                        <td class="p-4">
-                            <div class="inline-block px-3 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                        <td class="p-4 text-center">
+                            <span class="px-2 py-1 text-[10px] font-bold rounded-full bg-orange-100 text-orange-700 uppercase">
                                 ${item.status}
-                            </div>
+                            </span>
                         </td>
-                        <td class="p-4 font-mono text-emerald-600 font-bold">${item.amount}</td>
+                        <td class="p-4 text-sm font-mono text-emerald-600 font-bold">${item.amount}</td>
                     </tr>
                 `).join('');
             } catch (error) {
-                document.getElementById('loading').innerText = "讀取失敗";
+                document.getElementById('loading').innerText = "❌ 讀取失敗，請檢查 API 網址與權限";
+                console.error(error);
             }
         }
         loadData();
     </script>
+</body>
+</html>
